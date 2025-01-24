@@ -186,10 +186,6 @@ code {
         z-index: -1; /* Coloca el corazón detrás del texto */
     }
 
-/*.top-row {
-    background-color: #d81b60 !important;*/ /* Color rojo del love counter */
-/*}*/
-
     .top-row[b-a6blrqj0ff] {
         background-color: #d81b60 !important;
     }
@@ -200,6 +196,12 @@ code {
     mask: radial-gradient(at 70% 31%,#000 29%,#0000 30%), radial-gradient(at 30% 31%,#000 29%,#0000 30%), linear-gradient(#000 0 0) bottom/100% 50% no-repeat;
     clip-path: polygon(-41% 0,50% 91%, 141% 0);
     box-shadow: 0 0 20px 10px pink;
+}
+
+@media (max-width: 768px) { /* Ajusta el valor según tu necesidad */
+    .love-video {
+        height: 320px;
+    }
 }
 
 .names {
