@@ -1,0 +1,42 @@
+﻿<div>
+	@if (IsMesiversary)
+	{
+		<p class="mesiversary-message">¡Feliz @MonthsTogether° Mesiversario!</p>
+	}
+	else
+	{
+		<p>¡Hemos estado juntos por @DaysTogether días!</p>
+		<p>Días hasta nuestro próximo mesiversario: @DaysUntilNextMesiversary</p>
+	}
+</div>
+
+@code {
+	private int DaysTogether { get; set; }
+	private int DaysUntilNextMesiversary { get; set; }
+	private int MonthsTogether { get; set; }
+	private bool IsMesiversary { get; set; }
+	private DateTime StartingDate { get; set; } = new DateTime(2024, 10, 11); // Fecha de inicio de la relación
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+		CalculateDays();
+	}
+
+	private void CalculateDays()
+	{
+		// Calcular los días que han estado juntos
+		DaysTogether = (DateTime.Today - StartingDate).Days;
+
+		// Calcular los meses que han estado juntos
+		MonthsTogether = ((DateTime.Today.Year - StartingDate.Year) * 12) + DateTime.Today.Month - StartingDate.Month;
+
+		// Calcular los días hasta el próximo mesiversario
+		var today = DateTime.Today;
+		var nextMesiversary = StartingDate.AddMonths(MonthsTogether + 1);
+		DaysUntilNextMesiversary = (nextMesiversary - today).Days;
+
+		// Verificar si hoy es el mesiversario
+		IsMesiversary = today.Day == StartingDate.Day && MonthsTogether > 0;
+	}
+}
