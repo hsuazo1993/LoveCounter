@@ -1,9 +1,122 @@
 ﻿@page "/diary"
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Lovenote - Querido Diario</PageTitle>
 
-<h3>Querido Diario</h3>
+
+<div class="diario-container">
+	<h1>Querido Diario</h1>
+
+	@if (CanAddEntryToday) // Mostrar la sección solo si CanAddEntryToday es true
+	{
+		<div class="new-entry">
+			<h2>Nueva entrada</h2>
+			<label for="fileInput">Subir imagen</label>
+			<InputFile id="fileInput" OnChange="HandleFileSelected" hidden />
+			<div class="image-preview">
+				@if (newEntryImage != null)
+				{
+					<img src="@newEntryImage" alt="Vista previa de la imagen" />
+				}
+			</div>
+
+			<div class="textarea-button-container">
+				<textarea @bind="newEntryText"></textarea>
+				<button @onclick="SaveEntry">Guardar entrada</button>
+			</div>
+		</div>
+	}
+
+	@foreach (var entry in diarioEntries.OrderByDescending(d => d.Date))
+	{
+		<div class="entry">
+			<div class="date">
+				<span>@entry.Date.ToString("yyyy-MM-dd")</span>
+			</div>
+			@if (entry.Image != null)
+			{
+				<div class="image-container">
+					<img src="@entry.Image" alt="Imagen de la entrada" />
+				</div>
+			}
+			<div class="text">
+				<p>@entry.Text</p>
+			</div>
+		</div>
+	}
+</div>
 
 @code {
+	private List<DiarioEntry> diarioEntries = new List<DiarioEntry>();
+	private string newEntryText = "";
+	private string? newEntryImage; // Variable para la nueva imagen
+	private bool CanAddEntryToday { get; set; } = true; // Variable para controlar la visibilidad del botón
 
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadEntries();
+		CheckIfCanAddEntryToday();
+	}
+
+	private async Task SaveEntry()
+	{
+		if (!string.IsNullOrWhiteSpace(newEntryText))
+		{
+			var newEntry = new DiarioEntry
+				{
+					Id = diarioEntries.Any() ? diarioEntries.Max(e => e.Id) + 1 : 1,
+					Text = newEntryText,
+					Date = DateTime.Today,
+					Image = newEntryImage // Guardar la imagen en la entrada
+				};
+			diarioEntries.Add(newEntry);
+			await SaveEntries();
+			newEntryText = "";
+			newEntryImage = null; // Limpiar la imagen después de guardarla
+		}
+
+		CheckIfCanAddEntryToday(); // Verifica si se puede agregar otra entrada hoy
+	}
+
+	private async Task HandleFileSelected(InputFileChangeEventArgs e)
+	{
+		var file = e.File;
+		if (file != null)
+		{
+			var buffer = new byte[file.Size];
+			await file.OpenReadStream().ReadAsync(buffer);
+			newEntryImage = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+		}
+	}
+
+	private void CheckIfCanAddEntryToday()
+	{
+		CanAddEntryToday = !diarioEntries.Any(e => e.Date.Date == DateTime.Today.Date);
+	}
+
+	// Lógica para guardar en localStorage (reemplazar con lógica de base de datos)
+	private async Task SaveEntries()
+	{
+		var json = System.Text.Json.JsonSerializer.Serialize(diarioEntries);
+		await JSRuntime.InvokeVoidAsync("localStorage.setItem", "diarioEntries", json);
+	}
+
+	private async Task LoadEntries()
+	{
+		var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "diarioEntries");
+		if (!string.IsNullOrWhiteSpace(json))
+		{
+			diarioEntries = System.Text.Json.JsonSerializer.Deserialize<List<DiarioEntry>>(json);
+		}
+	}
+
+	public class DiarioEntry
+	{
+		public int Id { get; set; }
+		public string Author { get; set; }
+		public string AuthorImage { get; set; }
+		public string Text { get; set; }
+		public string? Image { get; set; } // Propiedad para la imagen
+		public DateTime Date { get; set; }
+	}
 }
